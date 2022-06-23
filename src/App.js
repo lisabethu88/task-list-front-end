@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import TaskList from './components/TaskList.js';
 import './App.css';
 import axios from 'axios';
+import NewTaskForm from './components/NewTaskForm.js';
 
-const kBaseUrl = 'http://localhost:5000';
+// read the base url from the .env file
+const kBaseUrl = process.env['REACT_APP_BASE_URL'];
+// const kBaseUrl = 'http://localhost:5000';
 
 const taskApiToJson = task => {
   // unpack the fields of a task, renaming is_complete to isComplete in the 
@@ -85,6 +88,35 @@ const deleteTaskAsync = id => {
   });
 };
 
+const addTaskAsync = (taskData) => {
+  // extract values from taskData
+  const { title, isComplete } = taskData;
+
+  // compute additional values
+  const description = 'created in Task List Front End';
+  const completedAt = isComplete ? new Date() : null;
+
+  // build a request body using a string key to avoid having the linter
+  // yell at us
+  const body = { title, description, ['completed_at']: completedAt };
+
+  // return the end of the promise chain to allow further then/catch calls
+  return axios.post(`${kBaseUrl}/tasks`, body)
+  .then(response => {
+    // convert the received task from having python-like keys to JS-like keys
+    // using a helper function (taskApiToJson)
+
+    // the value we return from a then will become the input to the next then
+    return taskApiToJson(response.data.task);
+  })
+  .catch(err => {
+    console.log(err);
+
+    // anything we throw will skip over any intervening then clauses to become
+    // the input to the next catch clause
+    throw new Error('error creating task');
+  });
+};
 
 const App = () => {
   const [tasks, setTasks] = useState([]);  // initialize to an empty list of tasks
@@ -166,6 +198,24 @@ const App = () => {
     });
   };
 
+  // use our helper to asynchronously create a new task, then
+  // chain a callback to set our tasks state once a successful result is
+  // returned. We duplicate the old list of tasks, and add the newly returned
+  // task to the end of the list.
+
+  const addTask = taskData => {
+    return addTaskAsync(taskData)
+    .then(task => {
+      // use the callback style of updating the tasks list
+      // oldTasks will receive the current contents of the tasks state
+      // this is very short, so we can use the implied return arrow function
+      setTasks(oldTasks => [ ...oldTasks, task ]);
+    })
+    .catch(err => {
+      console.log(err.message);
+    });
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -178,6 +228,9 @@ const App = () => {
             onToggleCompleteCallback={updateTask}
             onDeleteCallback={deleteTask}
           />
+        </div>
+        <div>
+          <NewTaskForm onAddTaskCallback={addTask} />
         </div>
       </main>
     </div>
