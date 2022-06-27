@@ -89,7 +89,7 @@ const addTaskAsync = async taskData => {
 
   // build a request body using a string key to avoid having the linter
   // yell at us
-  const body = { title, description, ['completed_at']: completedAt };
+  const body = { title, description, 'completed_at': completedAt };
 
   try {
     const response = await axios.post(`${kBaseUrl}/tasks`, body);
