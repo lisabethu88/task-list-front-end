@@ -98,7 +98,7 @@ const addTaskAsync = (taskData) => {
 
   // build a request body using a string key to avoid having the linter
   // yell at us
-  const body = { title, description, ['completed_at']: completedAt };
+  const body = { title, description, 'completed_at': completedAt };
 
   // return the end of the promise chain to allow further then/catch calls
   return axios.post(`${kBaseUrl}/tasks`, body)
